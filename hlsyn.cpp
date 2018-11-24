@@ -335,11 +335,13 @@ void iovaluescomp(string str, string &x, string &y, string &z) //find input and 
 	return;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
 	string filename, filename1, filename2, iline, oline, newline, str, str1, strc, strv;
 	string str2, str3, str4, str5, stri, stro;
 	string instr[20] = {}, outstr[20] = {}, wirestr[20] = {}, regstr[20] = {}, varstr[20] = {};
 	string insize, outsize, w, x, y, z, w_dw[14] = {}, x_dw[14] = {}, y_dw[14] = {}, z_dw[14] = {};
+	string node[20] = {};
 	size_t found, found1, found2, found3, found4, found5, found6;
 	size_t found7, found8, found9, found10, found11, foundname1, foundname2;
 	int bittemp, temp = 0, bitsize = 0, start = 0, i = 0, m = 0, DW[15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
@@ -378,33 +380,54 @@ int main(int argc, char *argv[]) {
 
 	if (myfile1.is_open()) // open input file check and write to output file check
 	{
-		
+		s = 0;
 		while (getline(myfile1, iline)) //parse the input variables
 		{
+			while (iline.find(" ") == 0)
+				iline = iline.substr((iline.find(" ")) + 1);	//remove extra preceding spaces
+			while (iline.find("\t") == 0)
+				iline = iline.substr((iline.find("\t")) + 1);	//remove preceding tab characters
 			str1 = ""; str2 = ""; str3 = ""; str4 = "0";
-			temp = 0;
+			temp = 0; 
+			found = iline.find("if");
+			if ((found != string::npos) && (found < iline.length()))
+			{
+				node[s] = iline;	//add "if" statement to vertex/node array
+				s++;
+			}
+			found = iline.find("else");
+			if ((found != string::npos) && (found < iline.length()))
+			{
+				node[s] = iline;	//add "else" statement to vertex/node array
+				s++;
+			}
 			if (iline != "")
 			{
 				foundname1 = iline.find("=");
 				if (foundname1 != string::npos)
 				{
-					get_ops_data(iline, temp);
-					count_DPC[temp]++;
-					error = opcheck(iline);
-					if (error == 1)
+					node[s] = iline;	//add to vertex/node array
+					s++; 
+					found = iline.find("for");
+					if (found == string::npos)
 					{
-						cout << endl
-							<< " Invalid Operation" << endl;
-						return 2;
-					}
-					ew = 1; ex = 1; ey = 1; ez = 1;
-					for (m = 0; m < i; m++)
-					{
-						stri = instr[m];
-						stro = outstr[m];
-						strv = varstr[m];
-						switch (temp)
+						get_ops_data(iline, temp);
+						count_DPC[temp]++;
+						error = opcheck(iline);
+						if (error == 1)
 						{
+							cout << endl
+								<< " Invalid Operation" << endl;
+							return 2;
+						}
+						ew = 1; ex = 1; ey = 1; ez = 1;
+						for (m = 0; m < i; m++)
+						{
+							stri = instr[m];
+							stro = outstr[m];
+							strv = varstr[m];
+							switch (temp)
+							{
 							case 10:
 								iovaluesmux(iline, w, x, y, z);
 								break;
@@ -433,16 +456,17 @@ int main(int argc, char *argv[]) {
 								iovaluesshift(iline, x, y, z);
 								break;
 							default:
-								iovalues(iline, x, y, z);							
+								iovalues(iline, x, y, z);
+							}
+							varcheck(iline, stri, stro, strv, w, x, y, z, ew, ex, ey, ez);
+							error = ew + ex + ey + ez;
 						}
-						varcheck(iline, stri, stro, strv, w, x, y, z, ew, ex, ey, ez);
-						error = ew + ex + ey + ez;
-					}
-					if (error != 0)
-					{
-						cout << endl
-							<< " Missing Variable" << endl;
-						return 2;
+						if (error != 0)
+						{
+							cout << endl
+								<< " Missing Variable" << endl;
+							return 2;
+						}
 					}
 				}
 				else
