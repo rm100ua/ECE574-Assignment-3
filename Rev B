@@ -14,7 +14,7 @@ struct dp_comp {				//Data Path Component (DPC) structure with attributes for DP
 	int order;					//order as received from text file
 	int function;				//enumeration of the components ( ALU = 0, MUL = 1, Logic/Logical = 2, Div = 3)
 	string dp_ins_str;			//comma delimited list of inputs
-	string dp_ins[2];			//array of inputs
+	string dp_ins[3];			//array of inputs
 	string dp_outs_str;			//comma delimited list of outputs
 	string dp_outs[3];			//array of outputs
 	//populated by sequencing routine
@@ -44,12 +44,13 @@ struct dp_comp op_list[20];	//create array of above structure
 
 struct cir_desc {			//circuit description
 	string inp_str;			//input string
-	string ins[4];			//array of inputs to the circuit
+	string ins[20];			//array of inputs to the circuit
 	string inp_type;		//Int or UInt
 	string out_str;
-	string outs[4];			//array of outputs of the circuit
+	string var_str;
+	string outs[20];			//array of outputs of the circuit
 	string wires[4];
-	string reg[4];
+	string reg[20];
 };
 struct cir_desc cir_list;
 
@@ -369,6 +370,62 @@ void iovaluescomp(string str, string &x, string &y, string &z) //find input and 
 	return;
 }
 
+void parse_cir_inputs(void)
+{
+	string str;
+	size_t found;
+	int c = 0, d = 0, f = 0;
+
+	str = cir_list.inp_str;
+	while (str != "")
+	{
+		found = str.find(",");
+		if ((found != string::npos) && (found < str.length()))
+		{
+			cir_list.ins[c] = str.substr(0, found);
+			str = str.substr(found + 1);
+			c++;
+		}
+		if (found == string::npos)
+		{
+			cir_list.ins[c] = str;
+			str = "";
+		}			
+	}
+	str = cir_list.out_str;
+	while (str != "")
+	{
+		found = str.find(",");
+		if ((found != string::npos) && (found < str.length()))
+		{
+			cir_list.outs[d] = str.substr(0, found);
+			str = str.substr(found + 1);
+			d++;
+		}
+		if (found == string::npos)
+		{
+			cir_list.outs[d] = str;
+			str = "";
+		}
+	}
+	str = cir_list.var_str;
+	while (str != "")
+	{
+		found = str.find(",");
+		if ((found != string::npos) && (found < str.length()))
+		{
+			cir_list.reg[f] = str.substr(0, found);
+			str = str.substr(found + 1);
+			f++;
+		}
+		if (found == string::npos)
+		{
+			cir_list.reg[f] = str;
+			str = "";
+		}
+	}
+}
+
 //routine to find non-schedule sequence
 //populate the seq_clock value of the structure for each operation
 void get_sequence(void)
@@ -394,7 +451,7 @@ void get_sequence(void)
 	int inp_found = 0;						//flag inputs as found in ready input list
 
 	cout << "get_sequence" << endl;
-	//parse_cir_inputs();
+	parse_cir_inputs();
 	cout << cir_list.inp_str << endl;
 	cout << "output string" << cir_list.out_str << endl;
 	   
@@ -484,6 +541,7 @@ void get_sequence(void)
 		cout << "p i.clock:  " << p << "  " << op_list[p].seq_clock << endl;
 	}
 }
+
 //calculate the probability for each operation in each clock period
 void op_prob(void)
 {
@@ -676,7 +734,7 @@ double calcTForce(int node, int t_period)
 	return total_force;
 }
 
-void forceDSched(void)
+/*void forceDSched(void)
 {
 	int sched_count = 0;							//count operations scheduled
 	int p = 0;
@@ -738,7 +796,7 @@ void forceDSched(void)
 		op_list[p].ALAP_clock = op_list[p].FDSched;
 		sched_count++;											//count operations scheduled
 	} //while (sched_count < op_num)						//until all operations are scheduled
-}
+}*/
 
 int main(int argc, char *argv[]) 
 {
@@ -772,26 +830,6 @@ int main(int argc, char *argv[])
 	   	  
 
 	//initailize the op_list array
-
-	/*for (i = 0; i < 20; i++) 
-	{
-		op_list[i].function = 99;		//component enumeration uses 0 thru 12
-		op_list[i].order = 0;
-		op_list[i].top_order = 0;
-		op_list[i].out_line = string();
-		op_list[i].d_width = 0;
-		op_list[i].latency = 0.0;
-		op_list[i].i_clock = 0;
-		op_list[i].dp_ins[0] = string();
-		op_list[i].dp_ins[1] = string();
-		op_list[i].dp_ins_str = string();
-		op_list[i].dp_outs[0] = string();
-		op_list[i].dp_outs[1] = string();
-		op_list[i].dp_outs[2] = string();
-		op_list[i].dp_outs_str = string();
-	}*/
-
-	//initailize the op_list array
 	for (i = 0; i < 20; i++) {
 		op_list[i].function = 99;		//component enumeration uses 0 thru 12
 		op_list[i].order = 0;
@@ -802,6 +840,7 @@ int main(int argc, char *argv[])
 		//op_list[i].i_clock = 0;
 		op_list[i].dp_ins[0] = string();
 		op_list[i].dp_ins[1] = string();
+		op_list[i].dp_ins[2] = string();
 		op_list[i].dp_ins_str = string();
 		op_list[i].dp_outs[0] = string();
 		op_list[i].dp_outs[1] = string();
@@ -836,8 +875,9 @@ int main(int argc, char *argv[])
 				temp = 16;
 				node[s] = iline;	//add "if" statement to vertex/node array
 				op_list[s].dp_ins_str = iline;
+				op_list[s].order = s + 1;
 				op_list[s].function = temp;
-				s++;
+				s++;		//count number of nodes/vectors
 			}
 			found = iline.find("else");
 			if ((found != string::npos) && (found < iline.length()))
@@ -845,8 +885,9 @@ int main(int argc, char *argv[])
 				temp = 17;
 				node[s] = iline;	//add "else" statement to vertex/node array
 				op_list[s].dp_ins_str = iline;
+				op_list[s].order = s + 1;
 				op_list[s].function = temp;
-				s++;
+				s++;			//count number of nodes/vectors
 			}
 			if (iline != "")
 			{
@@ -855,6 +896,7 @@ int main(int argc, char *argv[])
 				{
 					node[s] = iline;	//add to vertex/node array
 					op_list[s].dp_ins_str = iline;
+					op_list[s].order = s + 1;
 					//s++; 
 					found = iline.find("for");
 					temp = 18;
@@ -908,8 +950,9 @@ int main(int argc, char *argv[])
 								iovalues(iline, x, y, z);
 							}
 							varcheck(iline, stri, stro, strv, w, x, y, z, ew, ex, ey, ez);
-							op_list[s].dp_ins[0] = x;
-							op_list[s].dp_ins[1] = y;
+							op_list[s].dp_ins[0] = w;
+							op_list[s].dp_ins[1] = x;
+							op_list[s].dp_ins[2] = y;
 							op_list[s].dp_outs[0] = z;
 							error = ew + ex + ey + ez;
 						}
@@ -921,17 +964,32 @@ int main(int argc, char *argv[])
 						}
 					}
 					op_list[s].function = temp;
-					s++;
+					s++;			//count number of nodes/vectors
 				}
 				else
 				{
 					get_in_out_data(iline, str1, str2, str3, str4, bitsize);
 					instr[i] = str1;
+					if (str1 != "")
+						if (cir_list.inp_str == "")
+							cir_list.inp_str = cir_list.inp_str + str1;
+						else
+							cir_list.inp_str = cir_list.inp_str + ", " + str1;
 					outstr[i] = str2;
+					if (str2 != "")
+						if (cir_list.out_str == "")
+							cir_list.out_str = cir_list.out_str + str2;
+						else
+							cir_list.out_str = cir_list.out_str + ", " + str2;
 					varstr[i] = str3;
+					if (str3 != "")
+						if (cir_list.var_str == "")
+							cir_list.var_str = cir_list.var_str + str3;
+						else
+							cir_list.var_str = cir_list.var_str + ", " + str3;
 					sign_var[i] = stoi(str4);		// 0 == unsigned ans 1 == signed
 					DW[i] = bitsize;
-					i++;
+					i++;			//count number of inputs/utput/variable lines
 				}				
 			}			
 		}
@@ -942,6 +1000,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}		
 	myfile1.close();
+
+	get_sequence();
 
 	if (myfile2.is_open()) // open output file check and write to output file
 	{
