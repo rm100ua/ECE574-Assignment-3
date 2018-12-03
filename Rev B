@@ -15,34 +15,13 @@ int l_cstrt = 7;				//latency constraint as specified by input
 int op_num = 0;					//number of operations or node required by the input
 int sum_count_DPC = 0;		//count the datapath components, which is sum of count_DPC[]
 
-/***
-struct dp_comp {				//Data Path Component (DPC) structure with attributes for DPC
-	//populated by parsing routine
-	int order;					//order as received from text file
-	int function;				//enumeration of the components ( ALU = 0, MUL = 1, Logic/Logical = 2, Div = 3)
-	string dp_ins_str;			//comma delimited list of inputs
-	string dp_ins[2];			//array of inputs
-	string dp_outs_str;			//comma delimited list of outputs
-	string dp_outs[3];			//array of outputs
-	//populated by sequencing routine
-	int seq_clock;				//non-scheduled sequence order number
-	//poplulate by ASAP routine
-	int ASAP_clock;				//clock cycle for ASAP schedule
-	//populate by ALAP routine
-	int ALAP_clock;				//clock cycle for ALAP schedule
-	//populate by width routine
-	int width;					//time-frame width
-	string out_line;			//output line to be sent to output file (verilog file)
-};								//Data Path Component (DPC) structure with DPC attributes
-struct dp_comp dpc_list[20];	//create array of above structure
-***/
 
 struct dp_comp {				//Data Path Component (DPC) structure with attributes for DPC
 	//populated by parsing routine
 	int order;					//order as received from text file
 	int function;				//enumeration of the components ( ALU = 0, MUL = 1, Logic/Logical = 2, Div = 3)
 	string dp_ins_str;			//comma delimited list of inputs
-	string dp_ins[2];			//array of inputs
+	string dp_ins[3];			//array of inputs
 	string dp_outs_str;			//comma delimited list of outputs
 	string dp_outs[3];			//array of outputs
 	//populated by sequencing routine
@@ -72,18 +51,20 @@ struct dp_comp {				//Data Path Component (DPC) structure with attributes for DP
 	int top_order;				//topological order used to find critical datapath
 
 };
-struct dp_comp op_list[20];	//create array of above structure
+struct dp_comp op_list[40];	//create array of above structure
 
 
 //global structure contains attributes of the Circuit
 struct cir_desc {			//circuit description
 	string inp_str;			//input string
-	string ins[4];			//array of inputs to the circuit
+	string ins[40];			//array of inputs to the circuit
+	int inp_count;			//number of inputs to the circuit
 	string inp_type;		//Int or UInt
 	string out_str;
-	string outs[4];			//array of outputs of the circuit
+	string outs[40];			//array of outputs of the circuit
+	string var_str;
 	string wires[4];
-	string reg[4];
+	string reg[40];
 };
 struct cir_desc cir_list;
 
@@ -106,11 +87,11 @@ void get_in_out_data(string str, string &str1, string &str2, string &str3, strin
 	{
 		if ((foundstr1 = str.find("UInt")) != string::npos) {
 			str = str.substr(foundstr1 + 4);
-			//cir_list.inp_type = "UInt";	
+			cir_list.inp_type = "UInt";	
 		}
 		else if ((foundstr2 = str.find("Int")) != string::npos) {
 			str = str.substr(foundstr2 + 3);
-			//cir_list.inp_type = "Int";
+			cir_list.inp_type = "Int";
 			str4 = "1";
 		}
 		foundstr3 = str.find(" ");
@@ -125,11 +106,11 @@ void get_in_out_data(string str, string &str1, string &str2, string &str3, strin
 	{
 		if ((foundstr1 = str.find("UInt")) != string::npos) {
 			str = str.substr(foundstr1 + 4);
-			//cir_list.inp_type = "UInt";	
+			cir_list.inp_type = "UInt";	
 		}
 		else if ((foundstr2 = str.find("Int")) != string::npos) {
 			str = str.substr(foundstr2 + 3);
-			//cir_list.inp_type = "Int";
+			cir_list.inp_type = "Int";
 			str4 = "1";
 		}
 		foundstr3 = str.find(" ");
@@ -144,11 +125,11 @@ void get_in_out_data(string str, string &str1, string &str2, string &str3, strin
 	{
 		if ((foundstr1 = str.find("UInt")) != string::npos) {
 			str = str.substr(foundstr1 + 4);
-			//cir_list.inp_type = "UInt";	
+			cir_list.inp_type = "UInt";	
 		}
 		else if ((foundstr2 = str.find("Int")) != string::npos) {
 			str = str.substr(foundstr2 + 3);
-			//cir_list.inp_type = "Int";
+			cir_list.inp_type = "Int";
 			str4 = "1";
 		}
 		foundstr3 = str.find(" ");
@@ -166,6 +147,7 @@ void get_ops_data(string str, int &temp)
 {
 	size_t found, found1, found2, found3, found4, found5, found6, found7;
 	size_t found8, found9, found10, found11;
+	int sum_count_DPC = 0;		//count the datapath components, which is sum of count_DPC[]
 
 	found = str.find(" = "); // detemine which operation is being performed
 	if ((found != string::npos) && (found < 50))
@@ -407,121 +389,40 @@ void iovaluescomp(string str, string &x, string &y, string &z) //find input and 
 	return;
 }
 
-/***
-//routine to find non-schedule sequence
-//populate the seq_clock value of the structure for each operation
-//this is a CDFG, it gives order but no schedule
-void get_sequence(void)
+
+void parse_cir_inputs(void)
 {
-	int p = 0;								//counter used in for loop
-	int n = 0;
-	int k = 0;
-	int inp_idx;							//index for inputs arrays
-	int dpc_idx;							//index for data path components arrays
-	int seq_clock = 1;						//clock periods used for scheduling
-	int count_dpc_scheduled = 0;			//count the Data Path Components (DPC) scheduled
-	string ready_inputs[15];				//array of inputs that are ready, allowing datapaths to be scheduled
-	string dpc_inputs[12][10];				//DPC inputs [op_list.order][inp_index]
-	string dpc_outputs[12][10];				//DPC inputs [op_list.order][inp_index]
-	string temp_str = string();				//temporary string
-	int beg_pos = 0;						//string index
+	string temp_str = string();
+	int p = 0;
+	int findLoc = 0;
+	int beg_pos = 0;
 	int end_pos = 0;
-	int count_dpc = 0;						//count the components
-	int ready_ins_count;					//number of inputs in ready_inputs list
-	//int dpc_item_count = 0;					//number of DPC in circuit
-	int dpc_schd = 0;						//count dpc scheduled
-	int rdy_idx = 0;
-	int inp_found = 0;						//flag inputs as found in ready input list
+	int index = 0;
+	string var_str = string();
 
-	cout << "get_sequence" << endl;
+	cir_list.inp_count = 0;
+	temp_str = cir_list.inp_str;
+	temp_str = temp_str + '\0';			//terminate with NULL
 
-	//cout << cir_list.inp_str << endl;
-	//cout << "output string" << cir_list.out_str << endl;
-
-	cout << "circuit inputs:  " << endl;
-	for (p = 0; p < 3; ++p) {
-		cout << cir_list.ins[p] << endl;
-	}
-	cout << endl << endl;
-
-	cout << "ready_inputs:  " << endl;
-	for (p = 0; p < 3; ++p) {
-		ready_inputs[p] = cir_list.ins[p];		//copy circuit inpputs
-		cout << ready_inputs[p] << ", ";
-	}
-	cout << endl;
-
-	for (p = 4; p < 15; p++) {
-		ready_inputs[p] = string();		//empty string
-	}
-
-	ready_ins_count = 0;
+	end_pos = 0;
+	p = -1;
 	do {
-		ready_ins_count++;				//count the number of ready inpuuts
-	//} while (!ready_inputs[ready_ins_count].empty());
-	} while (ready_inputs[ready_ins_count] != "\0");
-	cout << "ready inputs:  " << ready_ins_count << endl;
-
-	//DPC that can run in first clock period have inputs in the circuit inputs list
-	//schedule the components for the first clock period
-	dpc_idx = 0;
-	while (op_list[dpc_idx].order) {			//check every dpc against the circuit inputs
-		if ((op_list[dpc_idx].dp_ins[0] == cir_list.ins[0]) || (op_list[dpc_idx].dp_ins[0] == cir_list.ins[1]) ||
-			(op_list[dpc_idx].dp_ins[0] == cir_list.ins[2]) || (op_list[dpc_idx].dp_ins[3] == cir_list.ins[3]))
+		p++;
+		while (((temp_str[end_pos] == ' ') || (temp_str[end_pos] == ',')) && (temp_str[end_pos]))
 		{
-			op_list[dpc_idx].seq_clock = seq_clock;			//schedule the dpc
-			cout << ".seq_clock  " << dpc_idx << ": " << op_list[p].seq_clock << endl;
-
-			p = 0;											//add datapath outputs to ready_ouputs array
-			do {											//all dpc have at least 1 input
-				ready_inputs[ready_ins_count - 1] = cir_list.outs[p];
-				p++;
-				//} while( ! cir_list.ins[p].empty() );
-			} while (!cir_list.ins[p].empty());
++			end_pos++;			//step over spaces and comma to eliminate from variable
 		}
-		dpc_idx++;
-	}
-
-	//check every DPC against the ready inputs list; then increment the clock
-	//dpc_idx = 0;
-	do {						//clock loop
-		seq_clock++;				//advance to next clock period
-		dpc_idx = 0;
-		do {										//dpc loop
-			if (!op_list[dpc_idx].seq_clock)			//if this DPC is NOT scheduled, compare inputs to ready_inputs
-			{
-				inp_idx = 0;
-				do {								//dpc inputs loop
-					rdy_idx = 0;
-					inp_found = 0;
-					do {					//ready inputs loop
-						if (op_list[dpc_idx].dp_ins[inp_idx] == ready_inputs[rdy_idx]) {
-							inp_found = 1;
-						}
-						else {
-							rdy_idx++;
-						}
-					} while (!inp_found && !ready_inputs[rdy_idx].empty());		//until input is found or no more ready inputs
-					inp_idx++;			//advance to next input
-				} while (inp_found && !op_list[dpc_idx].dp_ins[inp_idx].empty());			//until all inputs are checked or an input is not found
-				if (inp_found && !op_list[dpc_idx].dp_ins[inp_idx].empty())
-				{
-					op_list[dpc_idx].seq_clock = seq_clock;			//schedule the DPC for this clock period
-					dpc_schd++;										//count dpc scheduled
-				}
-			}  //if (!op_list[dpc_idx].seq_clock)
-			dpc_idx++;			//advance to next dpc
-		} while (op_list[dpc_idx].order);						//.order is zero if array is empty
-	} while (dpc_schd < op_num);			//repeat until all components have been scheduled
-
-	circuit_clocks = seq_clock;			//number of clock cycles required for this circuit
-	for (p = 0; p < op_num; p++) {
-			cout << "p i.clock:  " << p << "  " << op_list[p].seq_clock << endl;
-	}
+		beg_pos = end_pos++;
+		while (temp_str[end_pos] != ',' && (temp_str[end_pos]))
+		{
+			++end_pos;
+		}
+		cir_list.ins[p] = temp_str.substr(beg_pos, end_pos - beg_pos);
+		cir_list.inp_count++;
+	} while (temp_str[end_pos] && p < 40);
 }
-***/
 //routine to find schedule, that is populate the .i_clock value of the structure for each DPC
-void get_schedule(void)
+void get_sequence(void)
 {
 	int p = 0;								//counter used in for loop
 	int n = 0;
@@ -530,7 +431,7 @@ void get_schedule(void)
 	int dpc_idx;							//index for data path components arrays
 	int i_clock = 1;						//clock periods used for scheduling
 	int count_dpc_scheduled = 0;			//count the Data Path Components (DPC) scheduled
-	string ready_inputs[15];				//array of inputs that are ready, allowing datapaths to be scheduled
+	string ready_inputs[40];				//array of inputs that are ready, allowing datapaths to be scheduled
 	string dpc_inputs[12][10];				//DPC inputs [dpc_list.order][inp_index]
 	string dpc_outputs[12][10];				//DPC inputs [dpc_list.order][inp_index]
 	string temp_str = string();				//temporary string
@@ -545,13 +446,13 @@ void get_schedule(void)
 	int circuit_ins_count = 0;
 
 	cout << "get_schedule" << endl;
-	//parse_cir_inputs();
+	parse_cir_inputs();
 
 	cout << cir_list.inp_str << endl;
-	cout << "output string" << cir_list.out_str << endl;
+	cout << "output string: " << cir_list.out_str << endl;
 
 	cout << "circuit inputs:  " << endl;
-	for (p = 0; p < 3; p++) {
+	for (p = 0; p < cir_list.inp_count; p++) {
 		cout << cir_list.ins[p] << endl;
 	}
 	cout << endl << endl;
@@ -919,7 +820,7 @@ int main(int argc, char *argv[])
 	string str2, str3, str4, str5, stri, stro;
 	string instr[20] = {}, outstr[20] = {}, wirestr[20] = {}, regstr[20] = {}, varstr[20] = {};
 	string insize, outsize, w, x, y, z, w_dw[14] = {}, x_dw[14] = {}, y_dw[14] = {}, z_dw[14] = {};
-	string node[20] = {};
+	string node[40] = {};
 	size_t found;
 	//found1, found2, found3, found4, found5, found6;
 	//size_t found7, found8, found9, found10, found11, 
@@ -936,7 +837,7 @@ int main(int argc, char *argv[])
 	float cr_dp = 0.0;			//critical data path
 
 	//initailize the op_list array
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < 40; i++) {
 		op_list[i].function = 99;		//component enumeration uses 0 thru 12
 		op_list[i].order = 0;
 		op_list[i].top_order = 0;
@@ -965,11 +866,11 @@ int main(int argc, char *argv[])
 	cout << "Please enter filename: "; // generate output file 
 	cin >> filename1;
 	ifstream myfile1(filename1); // open input file
-	//ofstream myfile2(filename2); //open output file
 
 	if (myfile1.is_open()) // open input file check and write to output file check
 	{
 		s = 0;
+		int count_dpc = 0;					//count the datapath components found
 		while (getline(myfile1, iline)) //parse the input variables
 		{
 			while (iline.find(" ") == 0)
@@ -982,12 +883,18 @@ int main(int argc, char *argv[])
 			if ((found != string::npos) && (found < iline.length()))
 			{
 				node[s] = iline;	//add "if" statement to vertex/node array
+				op_list[sum_count_DPC].order = sum_count_DPC + 1;
+				op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
+				sum_count_DPC++;
 				s++;
 			}
 			found = iline.find("else");
 			if ((found != string::npos) && (found < iline.length()))
 			{
 				node[s] = iline;	//add "else" statement to vertex/node array
+				op_list[sum_count_DPC].order = sum_count_DPC + 1;
+				op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
+				sum_count_DPC++;
 				s++;
 			}
 			if (iline != "")
@@ -996,6 +903,9 @@ int main(int argc, char *argv[])
 				if (foundname1 != string::npos)
 				{
 					node[s] = iline;	//add to vertex/node array
+					op_list[sum_count_DPC].order = sum_count_DPC + 1;
+					op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
+					sum_count_DPC++;
 					s++;
 					found = iline.find("for");
 					if (found == string::npos)
@@ -1048,8 +958,17 @@ int main(int argc, char *argv[])
 								iovalues(iline, x, y, z);
 							}
 							varcheck(iline, stri, stro, strv, w, x, y, z, ew, ex, ey, ez);
+							op_list[count_dpc].dp_ins[0] = x;
+							if(y != "")
+								op_list[count_dpc].dp_ins[1] = y;
+							if (w != "")
+								op_list[count_dpc].dp_ins[2] = w;
+							op_list[count_dpc].dp_outs[0] = z;
+							op_list[sum_count_DPC].function = 10;
+
 							error = ew + ex + ey + ez;
 						}
+						count_dpc++;
 						if (error != 0)
 						{
 							cout << endl
@@ -1062,8 +981,20 @@ int main(int argc, char *argv[])
 				{
 					get_in_out_data(iline, str1, str2, str3, str4, bitsize);
 					instr[i] = str1;
+					if ((str1 != "") && (cir_list.inp_str != ""))
+						cir_list.inp_str = cir_list.inp_str + "," + str1;
+					else
+						cir_list.inp_str = cir_list.inp_str + str1;
 					outstr[i] = str2;
+					if ((str2 != "") && (cir_list.out_str != ""))
+						cir_list.out_str = cir_list.out_str + "," + str2;
+					else
+						cir_list.out_str = cir_list.out_str + str2;
 					varstr[i] = str3;
+					if ((str3 != "") && (cir_list.var_str != ""))
+						cir_list.var_str = cir_list.var_str + "," + str3;
+					else
+						cir_list.var_str = cir_list.var_str + str3;
 					sign_var[i] = stoi(str4);
 					DW[i] = bitsize;
 					i++;
@@ -1078,6 +1009,8 @@ int main(int argc, char *argv[])
 	}
 	myfile1.close();
 
+	get_sequence();
+	
 	filename2 = filename1.substr(0, filename1.find("."));
 	filename2 = filename2 + ".v";
 	ofstream myfile2(filename2); //open output file
