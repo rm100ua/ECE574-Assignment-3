@@ -143,7 +143,7 @@ void get_in_out_data(string str, string &str1, string &str2, string &str3, strin
 }
 
 
-void get_ops_data(string str, int &temp)
+void get_ops_data(string str, int &temp, int &function)
 {
 	size_t found, found1, found2, found3, found4, found5, found6, found7;
 	size_t found8, found9, found10, found11;
@@ -161,11 +161,13 @@ void get_ops_data(string str, int &temp)
 			if (found1 != string::npos)
 			{
 				temp = 1;
+				function = 0;
 				//count_DPC[10]++;							//count instances of INC
 			}
 			else
 			{
 				temp = 2;
+				function = 0;
 				//count_DPC[1]++;								//count instances of ADD
 			}
 		}
@@ -177,11 +179,13 @@ void get_ops_data(string str, int &temp)
 			if (found2 != string::npos)
 			{
 				temp = 3;
+				function = 0;
 				//count_DPC[11]++;							//count instances of DEC
 			}
 			else
 			{
 				temp = 4;
+				function = 0;
 				//count_DPC[2]++;							//count instances of SUB
 			}
 		}
@@ -189,59 +193,69 @@ void get_ops_data(string str, int &temp)
 		if (found3 != string::npos)
 		{
 			temp = 5;
+			function = 1;
 			//count_DPC[3]++;							//count instances of MUL
 		}
 		found4 = str.find(" / ");					//select DIV
 		if (found4 != string::npos)
 		{
 			temp = 6;
+			function = 3;
 			//count_DPC[8]++;							//count instances of DIV
 		}
 		found5 = str.find(" % ");					//select MOD
 		if (found5 != string::npos)
 		{
 			temp = 7;
+			function = 3;
 			//count_DPC[9]++;							//count instances of MOD
 		}
 		found6 = str.find(" << ");					//select shift left, SHL
 		if (found6 != string::npos)
 		{
 			temp = 8;
+			function = 2;
 			//count_DPC[7]++;							//count instances of SHL
 		}
 		found7 = str.find(" >> ");					//select shift right, SHR
 		if (found7 != string::npos)
 		{
 			temp = 9;
+			function = 2;
 			//count_DPC[6]++;							//count instances of SHR
 		}
 		found8 = str.find(" ? ");					//select MUX
 		if (found8 != string::npos)
 		{
 			temp = 10;
+			function = 2;
 			//count_DPC[5]++;							//count instances of MUX
 		}
 		found9 = str.find(" == ");					//select COMP, eq output
 		if (found9 != string::npos)
 		{
 			temp = 11;
+			function = 2;
 			//count_DPC[4]++;							//count instances of COMP
 		}
 		found10 = str.find(" < ");					//select COMP, lt output 
 		if ((found10 != string::npos) && (temp != 6))
 		{
 			temp = 12;
+			function = 2;
 			//count_DPC[4]++;							//count instances of COMP
 		}
 		found11 = str.find(" > ");					//select COMP, gt output
 		if ((found11 != string::npos) && (temp != 7))
 		{
 			temp = 13;
+			function = 2;
 			//count_DPC[4]++;							//count instances of COMP
 		}
 		if ((found != string::npos) && (temp == 0))		//select REG
 		{
 			temp = 15;
+			function = 2;
 			//count_DPC[0]++;							//count instances of REG
 		}
 		//count_dpc++;		
@@ -421,6 +435,144 @@ void parse_cir_inputs(void)
 		cir_list.inp_count++;
 	} while (temp_str[end_pos] && p < 40);
 }
+
+void sequence(int &latency)
+{
+	int b = 0, d = 0, h = 0, k = 0;
+	int yes = 0, xyes = 0, yyes = 0, wyes = 0;
+	int clock = 0, more = 0;
+	string dpc_var1 = "";
+	string dpc_var2 = "";
+	string dpc_var3 = "";
+	string str = "";
+
+	while (clock <= latency)
+	{
+		while (op_list[d].dp_outs_str != "")		//compare data path components with the inputs to the circuit
+		{
+			if (op_list[d].seq_clock == 0)
+			{
+				for (b = 0; b < cir_list.inp_count; b++)
+				{
+					str = cir_list.ins[b];
+					dpc_var1 = op_list[d].dp_ins[0];
+					if (dpc_var1 == str)
+					{
+						xyes++;
+						break;
+					}
+				}
+				h = 0;
+				while ((op_list[h].dp_outs_str != "") && (xyes == 0) && (clock != 0))
+				{
+					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					{
+						if (dpc_var1 == op_list[h].dp_outs[0])
+						{
+							xyes++;
+							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							{
+								more = 1;
+							}
+							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							{
+								more = 2;
+							}
+							break;
+						}
+					}
+					h++;
+				}
+				for (b = 0; b < cir_list.inp_count; b++)
+				{
+					if (op_list[d].dp_ins[1] != "")
+					{
+						str = cir_list.ins[b];
+						dpc_var2 = op_list[d].dp_ins[1];
+						if (dpc_var2 == str)
+						{
+							yyes++;
+							break;
+						}
+					}
+					else
+						break;
+				}
+				h = 0;
+				while ((op_list[h].dp_outs_str != "") && (yyes == 0) && (clock != 0))
+				{
+					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					{
+						if (dpc_var2 == op_list[h].dp_outs[k])
+						{
+							yyes++;
+							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							{
+								more = 1;
+							}
+							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							{
+								more = 2;
+							}
+							break;
+						}
+					}
+					h++;
+				}
+				for (b = 0; b < cir_list.inp_count; b++)
+				{
+					if (op_list[d].dp_ins[2] != "")
+					{
+						str = cir_list.ins[b];
+						dpc_var3 = op_list[d].dp_ins[2];
+						if (dpc_var3 == str)
+						{
+							wyes++;
+							break;
+						}
+					}
+					else
+						break;
+				}
+				h = 0;
+				while ((op_list[h].dp_outs_str != "") && (wyes == 0)&& (clock != 0))
+				{
+					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					{
+						if (dpc_var3 == op_list[h].dp_outs[0])
+						{
+							wyes++;
+							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							{
+								more = 1;
+							}
+							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							{
+								more = 2;
+							}
+							break;
+						}
+					}
+					h++;
+				}
+				yes = xyes + yyes + wyes;
+				if ((yes == 2) && (dpc_var2 != "") && (dpc_var3 == ""))
+					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+				if ((yes == 3) && (dpc_var2 != "") && (dpc_var3 != ""))
+					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+				if ((yes == 1) && (dpc_var2 == "") && (dpc_var3 == ""))
+					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+			}
+			d++;
+			yes = 0; xyes = 0; yyes = 0; wyes = 0; more = 0;
+			dpc_var1 = ""; dpc_var2 = ""; dpc_var3 = "";
+		}
+		d = 0;
+		clock++;
+	}
+	return;
+}
+
 //routine to find schedule, that is populate the .i_clock value of the structure for each DPC
 void get_sequence(void)
 {
@@ -468,10 +620,10 @@ void get_sequence(void)
 	}
 	cout << endl;
 
-	for (p = 4; p < circuit_ins_count; p++) {
+	/*for (p = 4; p < circuit_ins_count; p++) {
 		ready_inputs[p] = string();		//empty string
 		//inp_found[p] = 0;				//set input found array elements to zero
-	}
+	}*/
 
 	ready_ins_count = 0;
 	do {
@@ -817,6 +969,7 @@ void forceDSched(void)
 int main(int argc, char *argv[])
 {
 	string filename, filename1, filename2, iline, oline, newline, str, str1, strc, strv;
+	int latency = 0, function = 99;
 	string str2, str3, str4, str5, stri, stro;
 	string instr[20] = {}, outstr[20] = {}, wirestr[20] = {}, regstr[20] = {}, varstr[20] = {};
 	string insize, outsize, w, x, y, z, w_dw[14] = {}, x_dw[14] = {}, y_dw[14] = {}, z_dw[14] = {};
@@ -861,11 +1014,19 @@ int main(int argc, char *argv[])
 	}
 	i = 0;
 
-
-
 	cout << "Please enter filename: "; // generate output file 
 	cin >> filename1;
 	ifstream myfile1(filename1); // open input file
+
+	cout << "Enter latency value (in cycles): "; //latency value input
+	cin >> latency;
+	if (latency == 0)
+	{
+		cout << "Missing latency Value ";
+		cout << "Enter latency value (in cycles): "; //latency value input
+		cin >> latency;
+	}
+
 
 	if (myfile1.is_open()) // open input file check and write to output file check
 	{
@@ -878,6 +1039,7 @@ int main(int argc, char *argv[])
 			while (iline.find("\t") == 0)
 				iline = iline.substr((iline.find("\t")) + 1);	//remove preceding tab characters
 			str1 = ""; str2 = ""; str3 = ""; str4 = "0";
+			w = ""; x = ""; y = ""; z = "";
 			temp = 0;
 			found = iline.find("if");
 			if ((found != string::npos) && (found < iline.length()))
@@ -885,6 +1047,7 @@ int main(int argc, char *argv[])
 				node[s] = iline;	//add "if" statement to vertex/node array
 				op_list[sum_count_DPC].order = sum_count_DPC + 1;
 				op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
+				op_list[sum_count_DPC].dp_outs_str = iline;
 				sum_count_DPC++;
 				s++;
 			}
@@ -894,6 +1057,7 @@ int main(int argc, char *argv[])
 				node[s] = iline;	//add "else" statement to vertex/node array
 				op_list[sum_count_DPC].order = sum_count_DPC + 1;
 				op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
+				op_list[sum_count_DPC].dp_outs_str = iline;
 				sum_count_DPC++;
 				s++;
 			}
@@ -905,18 +1069,21 @@ int main(int argc, char *argv[])
 					node[s] = iline;	//add to vertex/node array
 					op_list[sum_count_DPC].order = sum_count_DPC + 1;
 					op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
-					sum_count_DPC++;
+					op_list[sum_count_DPC].dp_outs_str = iline;
+
 					s++;
 					found = iline.find("for");
 					if (found == string::npos)
 					{
-						get_ops_data(iline, temp);
+						get_ops_data(iline, temp, function);
+						op_list[sum_count_DPC].function = function;
 						count_DPC[temp]++;
 						error = opcheck(iline);
 						if (error == 1)
 						{
 							cout << endl
 								<< " Invalid Operation" << endl;
+							system("pause");
 							return 2;
 						}
 						ew = 1; ex = 1; ey = 1; ez = 1;
@@ -964,8 +1131,6 @@ int main(int argc, char *argv[])
 							if (w != "")
 								op_list[count_dpc].dp_ins[2] = w;
 							op_list[count_dpc].dp_outs[0] = z;
-							op_list[sum_count_DPC].function = 10;
-
 							error = ew + ex + ey + ez;
 						}
 						count_dpc++;
@@ -973,9 +1138,11 @@ int main(int argc, char *argv[])
 						{
 							cout << endl
 								<< " Missing Variable" << endl;
+							system("pause");
 							return 2;
 						}
 					}
+					sum_count_DPC++;
 				}
 				else
 				{
@@ -1008,8 +1175,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	myfile1.close();
-
-	get_sequence();
+	parse_cir_inputs();
+	sequence(latency);
+	//get_sequence();
 	
 	filename2 = filename1.substr(0, filename1.find("."));
 	filename2 = filename2 + ".v";
@@ -1069,7 +1237,28 @@ int main(int argc, char *argv[])
 		}
 
 		myfile2 << "\n";
-		myfile2 << "endmodule \n";
+
+		m = 1; oline = ""; newline = "";
+		while (m < latency)
+		{
+			newline = "Time " + std::to_string(m) + "\n";
+			u = 0;
+			while (op_list[u].dp_outs_str != "")
+			{
+				if (op_list[u].seq_clock == m)
+				{					
+					oline = oline + "\t" + op_list[u].dp_outs_str + "\n";
+				}					
+				u++;
+			}
+			if (oline != "")
+				myfile2 << newline + oline;
+			newline = "";
+			oline = "";
+			m++;
+		}
+
+		myfile2 << "\nendmodule \n";
 	}
 	else
 	{
