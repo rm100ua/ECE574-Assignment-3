@@ -436,11 +436,11 @@ void parse_cir_inputs(void)
 	} while (temp_str[end_pos] && p < 40);
 }
 
-void sequence(int &latency)
+void asap_sequence(int &latency, int &error)
 {
 	int b = 0, d = 0, h = 0, k = 0;
 	int yes = 0, xyes = 0, yyes = 0, wyes = 0;
-	int clock = 0, more = 0;
+	int clock = 0, more = 0, cycle = 0, func = 1, temp = 1;
 	string dpc_var1 = "";
 	string dpc_var2 = "";
 	string dpc_var3 = "";
@@ -450,7 +450,7 @@ void sequence(int &latency)
 	{
 		while (op_list[d].dp_outs_str != "")		//compare data path components with the inputs to the circuit
 		{
-			if (op_list[d].seq_clock == 0)
+			if (op_list[d].ASAP_clock == 0)
 			{
 				for (b = 0; b < cir_list.inp_count; b++)
 				{
@@ -465,16 +465,16 @@ void sequence(int &latency)
 				h = 0;
 				while ((op_list[h].dp_outs_str != "") && (xyes == 0) && (clock != 0))
 				{
-					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
 					{
 						if (dpc_var1 == op_list[h].dp_outs[0])
 						{
 							xyes++;
-							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
 							{
 								more = 1;
 							}
-							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
 							{
 								more = 2;
 							}
@@ -501,16 +501,16 @@ void sequence(int &latency)
 				h = 0;
 				while ((op_list[h].dp_outs_str != "") && (yyes == 0) && (clock != 0))
 				{
-					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
 					{
 						if (dpc_var2 == op_list[h].dp_outs[k])
 						{
 							yyes++;
-							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
 							{
 								more = 1;
 							}
-							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
 							{
 								more = 2;
 							}
@@ -537,16 +537,16 @@ void sequence(int &latency)
 				h = 0;
 				while ((op_list[h].dp_outs_str != "") && (wyes == 0)&& (clock != 0))
 				{
-					if ((h != d) && (op_list[h].seq_clock <= clock) && (op_list[h].seq_clock != 0) && (op_list[h].seq_clock >= 0))
+					if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
 					{
 						if (dpc_var3 == op_list[h].dp_outs[0])
 						{
 							wyes++;
-							if ((op_list[h].function == 1) && ((clock - op_list[h].seq_clock) < 2))			//multiplier operation
+							if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
 							{
 								more = 1;
 							}
-							if ((op_list[h].function == 3) && ((clock - op_list[h].seq_clock) < 3))			//division or modulus operation
+							if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
 							{
 								more = 2;
 							}
@@ -557,11 +557,11 @@ void sequence(int &latency)
 				}
 				yes = xyes + yyes + wyes;
 				if ((yes == 2) && (dpc_var2 != "") && (dpc_var3 == ""))
-					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+					op_list[d].ASAP_clock = op_list[d].ASAP_clock + more + clock + 1;
 				if ((yes == 3) && (dpc_var2 != "") && (dpc_var3 != ""))
-					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+					op_list[d].ASAP_clock = op_list[d].ASAP_clock + more + clock + 1;
 				if ((yes == 1) && (dpc_var2 == "") && (dpc_var3 == ""))
-					op_list[d].seq_clock = op_list[d].seq_clock + more + clock + 1;
+					op_list[d].ASAP_clock = op_list[d].ASAP_clock + more + clock + 1;
 			}
 			d++;
 			yes = 0; xyes = 0; yyes = 0; wyes = 0; more = 0;
@@ -569,6 +569,87 @@ void sequence(int &latency)
 		}
 		d = 0;
 		clock++;
+	}
+
+	while (op_list[k].ASAP_clock != 0)
+	{
+		if (op_list[k].ASAP_clock > cycle)
+			cycle = op_list[k].ASAP_clock;	
+		else
+			cycle = cycle;
+		k++;
+	}
+	k = 0;
+	while (op_list[k].ASAP_clock != 0)
+	{
+		if (op_list[k].ASAP_clock == cycle)
+		{
+			if (op_list[k].function == 1)
+				temp = 2;
+			if (op_list[k].function == 3)
+				temp = 3;
+			if ((op_list[k].function == 0) || (op_list[k].function == 2))
+				temp = 1;
+		}
+		if (temp > func)
+			func = temp;
+		else 
+			func = func;
+		k++;
+	}
+	if ((cycle + func) > latency)
+		error = 4;
+	else
+		error = 0;
+	return;
+}
+
+void alap_sequence(int &latency, int &error)
+{
+	int b = 0, d = 0, h = 0, k = 0;
+	int cycle = 0, delay = 0;;
+	string str = "", temp = "";
+	size_t found;
+
+	delay = latency;
+	str = cir_list.out_str;
+	while (op_list[h].dp_outs[0] != "")
+	{
+		temp = op_list[h].dp_outs[0];
+		found = str.find(temp);
+		if (found != string::npos)
+		{
+			if (op_list[h].function == 1)
+				op_list[h].ALAP_clock = delay - 1;
+			if (op_list[h].function == 3)
+				op_list[h].ALAP_clock = delay - 2;
+			if ((op_list[h].function == 0) || (op_list[h].function == 2))
+				op_list[h].ALAP_clock = delay;
+		}
+		h++;
+	}
+
+	while (op_list[k].ASAP_clock != 0)
+	{
+		if (op_list[k].ASAP_clock > cycle)
+			cycle = op_list[k].ASAP_clock;
+		else
+			cycle = cycle;
+		k++;
+	}
+	k = 0;
+
+	while (delay != 0)
+	{
+		while (op_list[b].dp_outs[0] != "")
+		{
+			if (op_list[b].ASAP_clock == cycle) 
+				op_list[b].ALAP_clock = delay;
+			b++;
+		}
+		delay--;
+		cycle--;
+		b = 0;
 	}
 	return;
 }
@@ -982,7 +1063,7 @@ int main(int argc, char *argv[])
 	int temp = 0, bitsize = 0, start = 0, i = 0, m = 0, DW[15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	//array to count instances of each datapath component
 	int s = 0, error = 0, here = 0, count_DPC[15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-	int nw = 0, nx = 0, ny = 0, nz = 0, sw = 0, sx = 0, sy = 0, sz = 0;
+	//int nw = 0, nx = 0, ny = 0, nz = 0, sw = 0, sx = 0, sy = 0, sz = 0;
 	int ew, ex, ey, ez;
 	int u = 0, sign_var[20] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	int sum_count_DPC = 0;		//count the datapath components, which is sum of count_DPC[]
@@ -996,6 +1077,8 @@ int main(int argc, char *argv[])
 		op_list[i].top_order = 0;
 		op_list[i].out_line = string();
 		op_list[i].d_width = 0;
+		op_list[i].ASAP_clock = 0;
+		op_list[i].ALAP_clock = 0;
 		op_list[i].latency = 0.0;
 		op_list[i].i_clock = 0;
 		op_list[i].dp_ins[0] = string();
@@ -1171,12 +1254,21 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		cout << "Unable to open file";
+		cout << "Unable to open file \n";
+		system("pause");
 		return 1;
 	}
 	myfile1.close();
 	parse_cir_inputs();
-	sequence(latency);
+	asap_sequence(latency, error);
+	alap_sequence(latency, error);
+
+	if (error == 4)
+	{
+		cout << "Incorrect Latency value \n";
+		system("pause");
+		return 4;
+	}
 	//get_sequence();
 	
 	filename2 = filename1.substr(0, filename1.find("."));
@@ -1237,22 +1329,46 @@ int main(int argc, char *argv[])
 		}
 
 		myfile2 << "\n";
+		myfile2 << "ASAP \n";
 
 		m = 1; oline = ""; newline = "";
-		while (m < latency)
+		while (m <= latency)
 		{
-			newline = "Time " + std::to_string(m) + "\n";
+			myfile2 << "Time " + std::to_string(m) + "\n";
 			u = 0;
 			while (op_list[u].dp_outs_str != "")
 			{
-				if (op_list[u].seq_clock == m)
+				if (op_list[u].ASAP_clock == m)
 				{					
 					oline = oline + "\t" + op_list[u].dp_outs_str + "\n";
 				}					
 				u++;
 			}
 			if (oline != "")
-				myfile2 << newline + oline;
+				myfile2 << oline;
+			newline = "";
+			oline = "";
+			m++;
+		}
+
+		myfile2 << "\n";
+		myfile2 << "ALAP \n";
+
+		m = 1; oline = ""; newline = "";
+		while (m <= latency)
+		{
+			myfile2 << "Time " + std::to_string(m) + "\n";
+			u = 0;
+			while (op_list[u].dp_outs_str != "")
+			{
+				if (op_list[u].ALAP_clock == m)
+				{
+					oline = oline + "\t" + op_list[u].dp_outs_str + "\n";
+				}
+				u++;
+			}
+			if (oline != "")
+				myfile2 << oline;
 			newline = "";
 			oline = "";
 			m++;
@@ -1262,7 +1378,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		cout << "Unable to open file";
+		cout << "Unable to open file \n";
+		system("pause");
 		return 1;
 	}
 	myfile2.close();
