@@ -403,6 +403,17 @@ void iovaluescomp(string str, string &x, string &y, string &z) //find input and 
 	return;
 }
 
+void iovaluesif(string str, string &x, string &outsize) //find input and output variables for if structure
+{
+	size_t found;
+	
+	found = str.find("(");
+	if ((found != string::npos) && (found < str.length()))
+	/*z = str.substr(0, str.find(" "));
+	str = str.substr((str.find(" ") + 3));
+	x = str.substr(0, str.find(" "));*/
+	return;
+}
 
 void parse_cir_inputs(void)
 {
@@ -987,11 +998,9 @@ int main(int argc, char *argv[])
 	int latency = 0, function = 99;
 	string str2, str3, str4, str5, stri, stro;
 	string instr[20] = {}, outstr[20] = {}, wirestr[20] = {}, regstr[20] = {}, varstr[20] = {};
-	string insize, outsize, w, x, y, z, w_dw[14] = {}, x_dw[14] = {}, y_dw[14] = {}, z_dw[14] = {};
+	string insize, outsize = "", w, x, y, z, w_dw[14] = {}, x_dw[14] = {}, y_dw[14] = {}, z_dw[14] = {};
 	string node[40] = {};
-	size_t found;
-	//found1, found2, found3, found4, found5, found6;
-	//size_t found7, found8, found9, found10, found11, 
+	size_t found, foundif;
 	size_t foundname1;		// , foundname2;
 	int bittemp;
 	int temp = 0, bitsize = 0, start = 0, i = 0, m = 0, DW[15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
@@ -1074,10 +1083,14 @@ int main(int argc, char *argv[])
 			found = iline.find("if");
 			if ((found != string::npos) && (found < iline.length()))
 			{
-				node[s] = iline;	//add "if" statement to vertex/node array
+				foundif = iline.find("{");
+				if ((foundif != string::npos) && (foundif < iline.length()))
+					newline = iline.substr(0, foundif - 1);
+				node[s] = newline;	//add "if" statement to vertex/node array
+				iovaluesif(newline, x, outsize);
 				op_list[sum_count_DPC].order = sum_count_DPC + 1;
 				op_list[sum_count_DPC].top_order = sum_count_DPC + 1;
-				op_list[sum_count_DPC].dp_outs_str = iline;
+				op_list[sum_count_DPC].dp_outs_str = newline;
 				op_list[sum_count_DPC].function = 2;
 				sum_count_DPC++;
 				s++;
