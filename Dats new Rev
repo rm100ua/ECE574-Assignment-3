@@ -1399,7 +1399,7 @@ int main(int argc, char *argv[])
 			u = 0;
 			while (op_list[u].dp_outs_str != "")
 			{
-				if (op_list[u].ASAP_clock == m)
+				if (op_list[u].ALAP_clock == m)
 				{					
 					oline = oline + "\t\t\t" + op_list[u].dp_outs_str + "\n";
 				}					
