@@ -957,22 +957,22 @@ int main(int argc, char *argv[]) {
     }
     i = 0;
 
-    /*if (argc == 3)
+    if (argc == 4 && argv[3] != 0)
     {
         filename1 = string(argv[1]);
         filename2 = string(argv[2]);
-        latency = int(argc);
+        latency = stoi(argv[3]);
     }
     else
     {
-        cerr << "Program Terminated: Invalid number of arguments";
+        cerr << "Program Terminated: Invalid number of arguments or Invalid latency";
         return 1;
-    }*/
+    }
 
-    cout << "Please enter filename: "; // generate output file
-    cin >> filename1;
+    /*cout << "Please enter filename: "; // generate output file
+    cin >> filename1;*/
     ifstream myfile1(filename1); // open input file
-
+/*
     cout << "Enter latency value (in cycles): "; //latency value input
     cin >> latency;
     l_cstrt = latency;
@@ -980,7 +980,7 @@ int main(int argc, char *argv[]) {
         cout << "Missing latency Value ";
         cout << "Enter latency value (in cycles): "; //latency value input
         cin >> latency;
-    }
+    }*/
 
 
     if (myfile1.is_open()) // open input file check and write to output file check
@@ -1149,8 +1149,8 @@ int main(int argc, char *argv[]) {
     }
     //get_sequence();
 
-    filename2 = filename1.substr(0, filename1.find("."));
-    filename2 = filename2 + ".v";
+    /*filename2 = filename1.substr(0, filename1.find("."));
+    filename2 = filename2 + ".v";*/
     ofstream myfile2(filename2); //open output file
 
     if (myfile2.is_open()) // open output file check and write to output file
