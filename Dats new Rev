@@ -1378,56 +1378,41 @@ int main(int argc, char *argv[])
 		}
 
 		myfile2 << "\nalways@(posedge clock) \nbegin \n\tstate <= #1 IDLE; \n";
-
 		myfile2 << "end else \n\tcase(state) \n";
-		myfile2 << "\t\tIDLE : if (start == 1'b1) begin\n\t\t\tstate <= #1 S??;";
-		myfile2 << "\n\t\t\tdone <= 0; \n\t\tend else begin \n\t\t\tstate <= #1 IDLE; \n\t\tend\n";
-		myfile2 << "ASAP \n";
+		myfile2 << "\t\tIDLE : if (start == 1'b1) begin\n\t\t\tstate <= #1 S1;";
+		myfile2 << "\n\t\t\tdone <= 0; \n";
 
-		m = 1; oline = ""; newline = "";
+		m = 0; newline = "";
+		while (cir_list.outs[m] != "")
+		{
+			newline = newline + "\t\t\t" + cir_list.outs[m] + " <= 0; \n";
+			m++;
+		}
+		myfile2 << newline;
+
+		myfile2 << "\t\tend else begin \n\t\t\tstate <= #1 IDLE; \n\t\tend\n";
+
+		m = 1; oline = ""; 
 		while (m <= latency)
 		{
-			myfile2 << "Time " + std::to_string(m) + "\n";
+			myfile2 << "\t\tS" << m << ": if (start == 1'b1) begin\n\t\t\tstate <= #1 S" << m + 1 << ";\n";
 			u = 0;
 			while (op_list[u].dp_outs_str != "")
 			{
 				if (op_list[u].ASAP_clock == m)
 				{					
-					oline = oline + "\t" + op_list[u].dp_outs_str + "\n";
+					oline = oline + "\t\t\t" + op_list[u].dp_outs_str + "\n";
 				}					
 				u++;
 			}
 			if (oline != "")
 				myfile2 << oline;
-			newline = "";
-			oline = "";
 			m++;
 		}
+		myfile2 << "\t\tS" << m << ": if (start == 1'b1) begin\n\t\t\tstate <= #1 IDLE;" << "\n\t\t\tdone <= 0; \n";
+		myfile2 << newline;
 
-		myfile2 << "\n";
-		myfile2 << "ALAP \n";
-
-		m = 1; oline = ""; newline = "";
-		while (m <= latency)
-		{
-			myfile2 << "Time " + std::to_string(m) + "\n";
-			u = 0;
-			while (op_list[u].dp_outs_str != "")
-			{
-				if (op_list[u].ALAP_clock == m)
-				{
-					oline = oline + "\t" + op_list[u].dp_outs_str + "\n";
-				}
-				u++;
-			}
-			if (oline != "")
-				myfile2 << oline;
-			newline = "";
-			oline = "";
-			m++;
-		}
-
-		myfile2 << "\n\tdefault : state <= #1 IDLE; \n\tend case \nend ";
+		myfile2 << "\t\tdefault : state <= #1 IDLE; \n\tend case \nend ";
 		myfile2 << "\nendmodule \n";
 	}
 	else
