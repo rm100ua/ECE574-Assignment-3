@@ -957,11 +957,11 @@ int main(int argc, char *argv[]) {
     }
     i = 0;
 
-    if (argc == 4 && argv[3] != 0)
+    if (argc == 4 && argv[2] != 0)
     {
         filename1 = string(argv[1]);
-        filename2 = string(argv[2]);
-        latency = stoi(argv[3]);
+        filename2 = string(argv[3]);
+        latency = stoi(argv[2]);
     }
     else
     {
