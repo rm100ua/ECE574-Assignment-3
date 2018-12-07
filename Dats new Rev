@@ -697,8 +697,112 @@ void alap_sequence(int &latency)
 	return;
 }
 
+//calculate the probability for each operation in each clock period
+void op_prob(void)
+{
+
+	int mul_count = 0;		//counters for respective operations
+	int alu_count = 0;
+	int logic_count = 0;
+	int div_count = 0;
+	int p = 0;				//count operations
+	int clk_count = 0;		//count clock periods
+
+	//inialize array variable to zero
+	for (clk_count = 0; clk_count < 20; clk_count++)
+	{
+		for (p = 0; p < 4; p++)
+		{
+			MUL_op[p][clk_count] = 0;
+			ALU_op[p][clk_count] = 0;
+			Logic_op[p][clk_count] = 0;
+			DIV_op[p][clk_count] = 0;
+		}
+		MUL_dist[clk_count] = 0;
+		ALU_dist[clk_count] = 0;
+		Logic_dist[clk_count] = 0;
+		DIV_dist[clk_count] = 0;
+	}
+
+	p = 0;
+	do {
+		switch (op_list[p].function)		// (ALU = 0, MUL = 1, Logic / Logical = 2, Div = 3)
+		{
+		case 0:
+			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+			{
+				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				{
+					MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
+					op_list[p].op_loc = mul_count;
+				}
+			}
+			mul_count++;											//count multiplier operations
+			break;
+		case 1:
+			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+			{
+				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				{
+					ALU_op[alu_count][clk_count] = 1.0 / op_list[p].width;
+					op_list[p].op_loc = alu_count;
+				}
+			}
+			alu_count++;
+			break;
+
+		case 2:
+			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+			{
+				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				{
+					Logic_op[logic_count][clk_count] = 1.0 / op_list[p].width;
+					op_list[p].op_loc = logic_count;
+				}
+			}
+			logic_count++;
+			break;
+
+		case 3:
+			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+			{
+				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				{
+					DIV_op[div_count][clk_count] = 1.0 / op_list[p].width;
+					op_list[p].op_loc = div_count;
+				}
+			}
+			div_count++;
+			break;
+		} //switch
+		++p;
+	} while (op_list[p].function < 99);
+
+	//sum the probabilities for each clock period
+	//MUL
+	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+	{
+		MUL_dist[clk_count] = MUL_op[0][clk_count] + MUL_op[1][clk_count] + MUL_op[2][clk_count] + MUL_op[3][clk_count];
+	}
+	//ALU
+	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+	{
+		ALU_dist[clk_count] = ALU_op[0][clk_count] + ALU_op[1][clk_count] + ALU_op[2][clk_count] + ALU_op[3][clk_count];
+	}
+	//Logic
+	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+	{
+		Logic_dist[clk_count] = Logic_op[0][clk_count] + Logic_op[1][clk_count] + Logic_op[2][clk_count] + Logic_op[3][clk_count];
+	}
+	//DIV
+	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+	{
+		DIV_dist[clk_count] = DIV_op[0][clk_count] + DIV_op[1][clk_count] + DIV_op[2][clk_count] + DIV_op[3][clk_count];
+	}
+}
+
 //routine to find schedule, that is populate the .i_clock value of the structure for each DPC
-void get_sequence(void)
+/*void get_sequence(void)
 {
 	int p = 0;								//counter used in for loop
 	int n = 0;
@@ -749,7 +853,7 @@ void get_sequence(void)
 		//inp_found[p] = 0;				//set input found array elements to zero
 	}*/
 
-	ready_ins_count = 0;
+	/*ready_ins_count = 0;
 	do {
 		ready_ins_count++;				//count the number of ready inpuuts
 	//} while (!ready_inputs[ready_ins_count].empty());
@@ -777,10 +881,10 @@ void get_sequence(void)
 			dpc_schd++;										//count dpc scheduled
 		}
 		dpc_idx++;
-	}
+	}*/
 
 	//check every DPC against the ready inputs list; then increment the clock
-	do {						//clock loop
+	/*do {						//clock loop
 		i_clock++;				//advance to next clock period
 		dpc_idx = 0;
 		do {										//dpc loop
@@ -820,10 +924,10 @@ void get_sequence(void)
 	for (p = 0; p < sum_count_DPC; p++) {
 		cout << "p i.clock:  " << p << "  " << op_list[p].i_clock << endl;
 	}
-}
+}*/
 
 //calculate the probability for each operation in each clock period
-void op_prob(void)
+/*void op_prob(void)
 {
 
 	int mul_count = 0;		//counters for respective operations
@@ -912,7 +1016,7 @@ void op_prob(void)
 	{
 		DIV_dist[clk_count] = DIV_op[0][clk_count] + DIV_op[1][clk_count] + DIV_op[2][clk_count] + DIV_op[3][clk_count];
 	}
-}
+}*/
 
 
 //given the node number and the clock period 
@@ -1327,7 +1431,7 @@ int main(int argc, char *argv[])
 	if (myfile2.is_open()) // open output file check and write to output file
 	{
 		oline = "`timescale 1ns / 1ns \n\n";
-		oline = oline + "module HLSM (Clk, Rst, Start, Done, ";
+		oline = oline + "module HLSM (Clk, Rst, Start, ";
 		for (m = 0; m < i; m++)
 		{
 			if (instr[m] != "")
@@ -1341,7 +1445,7 @@ int main(int argc, char *argv[])
 			if ((instr[m + 1] != "") || (outstr[m + 1] != ""))
 				oline = oline + ", ";
 		}
-		oline = oline + ") \n";
+		oline = oline + ", Done) \n";
 		myfile2 << oline;
 		myfile2 << "input Clk, Rst, Start; \n";
 		myfile2 << "output reg Done; \n";
@@ -1370,17 +1474,24 @@ int main(int argc, char *argv[])
 			{
 				bittemp = DW[u] - 1;
 				if (sign_var[u] == 0)
-					newline = "register [" + std::to_string(bittemp + 1) + ":0] " + varstr[u] + " \n";
+					newline = "register [" + std::to_string(bittemp + 1) + ":0] " + varstr[u] + ", state\n";
 				else
 					newline = "register signed [" + std::to_string(bittemp) + ":0] " + varstr[u] + " \n";
 				myfile2 << newline;
 			}
 		}
 
-		myfile2 << "\nalways@(posedge clock) \nbegin \n\tstate <= #1 IDLE; \n";
+		myfile2 << "\nalways@(posedge Clk) \nbegin \nif (Rst == 1'b1) begin \n\t#1 state <= 0; \n";
+		m = 0; newline = "";
+		while (cir_list.outs[m] != "")
+		{
+			newline = newline + "\t" + cir_list.outs[m] + " <= 0; \n";
+			m++;
+		}
+		myfile2 << newline;
 		myfile2 << "end else \n\tcase(state) \n";
-		myfile2 << "\t\tIDLE : if (start == 1'b1) begin\n\t\t\tstate <= #1 S1;";
-		myfile2 << "\n\t\t\tdone <= 0; \n";
+		myfile2 << "\t\tcase (0) : if (Start == 1'b1) begin\n\t\t\t#1 state <= 1;";
+		myfile2 << "\n\t\t\tDone <= 0; \n";
 
 		m = 0; newline = "";
 		while (cir_list.outs[m] != "")
@@ -1390,12 +1501,12 @@ int main(int argc, char *argv[])
 		}
 		myfile2 << newline;
 
-		myfile2 << "\t\tend else begin \n\t\t\tstate <= #1 IDLE; \n\t\tend\n";
+		myfile2 << "\t\tend else begin \n\t\t\t#1 state <= 0; \n\t\tend\n";
 
 		m = 1; oline = ""; 
 		while (m <= latency)
 		{
-			myfile2 << "\t\tS" << m << ": if (start == 1'b1) begin\n\t\t\tstate <= #1 S" << m + 1 << ";\n";
+			myfile2 << "\t\tcase (" << m << ") : if (Start == 1'b1) begin\n\t\t\t#1 state <= " << m + 1 << ";\n";
 			u = 0; oline = "";
 			while (op_list[u].dp_outs_str != "")
 			{
@@ -1409,10 +1520,10 @@ int main(int argc, char *argv[])
 				myfile2 << oline;
 			m++;
 		}
-		myfile2 << "\t\tS" << m << ": if (start == 1'b1) begin\n\t\t\tstate <= #1 IDLE;" << "\n\t\t\tdone <= 0; \n";
-		myfile2 << newline;
+		myfile2 << "\t\tcase (" << m << ") : if (start == 1'b1) begin\n\t\t\t#1 state <= 0;" << "\n\t\t\tDone <= 1; \n";
+		//myfile2 << newline;
 
-		myfile2 << "\t\tdefault : state <= #1 IDLE; \n\tend case \nend ";
+		myfile2 << "\t\tdefault : #1 state <= 0; \n\tend case \nend ";
 		myfile2 << "\nendmodule \n";
 	}
 	else
