@@ -424,7 +424,7 @@ void parse_cir_inputs(void)
 		p++;
 		while (((temp_str[end_pos] == ' ') || (temp_str[end_pos] == ',')) && (temp_str[end_pos]))
 		{
-+			end_pos++;			//step over spaces and comma to eliminate from variable
+			end_pos++;			//step over spaces and comma to eliminate from variable
 		}
 		beg_pos = end_pos++;
 		while (temp_str[end_pos] != ',' && (temp_str[end_pos]))
@@ -444,7 +444,7 @@ void parse_cir_inputs(void)
 		p++;
 		while (((temp_str[end_pos] == ' ') || (temp_str[end_pos] == ',')) && (temp_str[end_pos]))
 		{
-			+end_pos++;			//step over spaces and comma to eliminate from variable
+			end_pos++;			//step over spaces and comma to eliminate from variable
 		}
 		beg_pos = end_pos++;
 		while (temp_str[end_pos] != ',' && (temp_str[end_pos]))
@@ -834,7 +834,7 @@ void op_prob(void)
 	int clk_count = 0;		//count clock periods
 
 	//inialize array variable to zero
-	for (clk_count = 0; clk_count < 20; ++clk_count)
+	for (clk_count = 0; clk_count < 40; ++clk_count)
 	{
 		for (p = 0; p < 4; ++p)
 		{
@@ -856,18 +856,18 @@ void op_prob(void)
 		case 0:
 			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
 			{
-				MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = mul_count;
+				ALU_op[alu_count][clk_count] = 1.0 / op_list[p].width;
+				op_list[p].op_loc = alu_count;
 			}
-			mul_count++;											//count multiplier operations
+			alu_count++;											
 			break;
 		case 1:
 			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
 			{
-				ALU_op[alu_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = alu_count;
+				MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
+				op_list[p].op_loc = mul_count;
 			}
-			alu_count++;
+			mul_count++;								//count multiplier operations
 			break;
 
 		case 2:
@@ -1396,12 +1396,12 @@ int main(int argc, char *argv[])
 		while (m <= latency)
 		{
 			myfile2 << "\t\tS" << m << ": if (start == 1'b1) begin\n\t\t\tstate <= #1 S" << m + 1 << ";\n";
-			u = 0;
+			u = 0; oline = "";
 			while (op_list[u].dp_outs_str != "")
 			{
 				if (op_list[u].ALAP_clock == m)
 				{					
-					oline = oline + "\t\t\t" + op_list[u].dp_outs_str + "\n";
+					oline = oline + "\t\t\t" + op_list[u].dp_outs_str + ";\n";
 				}					
 				u++;
 			}
