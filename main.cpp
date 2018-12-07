@@ -76,10 +76,7 @@ double DIV_op[4][20] = {0};     // Initialize 2D array to all 0
 double MUL_dist[20] = {0.0};    //Initialize  array to all 0
 double ALU_dist[20] = {0.0};    //Initialize  array to all 0
 double Logic_dist[20] = {0.0};  //Initialize  array to all 0
-double DIV_dist[20];
-= {
-0.0
-}    //Initialize  array to all 0
+double DIV_dist[20] = {0.0};    //Initialize  array to all 0
 
 void get_in_out_data(string str, string &str1, string &str2, string &str3, string &str4, int &bitsize) {
     size_t foundstr1, foundstr2, foundstr3;
