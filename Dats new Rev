@@ -731,18 +731,7 @@ void op_prob(void)
 		case 0:
 			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
 			{
-				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
-				{
-					MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
-					op_list[p].op_loc = mul_count;
-				}
-			}
-			mul_count++;											//count multiplier operations
-			break;
-		case 1:
-			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-			{
-				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				if (clk_count >= op_list[p].ASAP_clock - 1 && clk_count <= op_list[p].ALAP_clock - 1)
 				{
 					ALU_op[alu_count][clk_count] = 1.0 / op_list[p].width;
 					op_list[p].op_loc = alu_count;
@@ -751,10 +740,22 @@ void op_prob(void)
 			alu_count++;
 			break;
 
+		case 1:
+			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
+			{
+				if (clk_count >= op_list[p].ASAP_clock - 1 && clk_count <= op_list[p].ALAP_clock - 1)
+				{
+					MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
+					op_list[p].op_loc = mul_count;
+				}
+			}
+			mul_count++;											//count multiplier operations
+			break;
+
 		case 2:
 			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
 			{
-				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				if (clk_count >= op_list[p].ASAP_clock - 1 && clk_count <= op_list[p].ALAP_clock - 1)
 				{
 					Logic_op[logic_count][clk_count] = 1.0 / op_list[p].width;
 					op_list[p].op_loc = logic_count;
@@ -766,7 +767,7 @@ void op_prob(void)
 		case 3:
 			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
 			{
-				if (clk_count >= op_list[p].ASAP_clock && clk_count >= op_list[p].ALAP_clock)
+				if (clk_count >= op_list[p].ASAP_clock - 1 && clk_count <= op_list[p].ALAP_clock - 1)
 				{
 					DIV_op[div_count][clk_count] = 1.0 / op_list[p].width;
 					op_list[p].op_loc = div_count;
@@ -926,99 +927,6 @@ void op_prob(void)
 	}
 }*/
 
-//calculate the probability for each operation in each clock period
-/*void op_prob(void)
-{
-
-	int mul_count = 0;		//counters for respective operations
-	int alu_count = 0;
-	int logic_count = 0;
-	int div_count = 0;
-	int p = 0;				//count operations
-	int clk_count = 0;		//count clock periods
-
-	//inialize array variable to zero
-	for (clk_count = 0; clk_count < 40; ++clk_count)
-	{
-		for (p = 0; p < 4; ++p)
-		{
-			MUL_op[p][clk_count] = 0;
-			ALU_op[p][clk_count] = 0;
-			Logic_op[p][clk_count] = 0;
-			DIV_op[p][clk_count] = 0;
-		}
-		MUL_dist[clk_count] = 0;
-		ALU_dist[clk_count] = 0;
-		Logic_dist[clk_count] = 0;
-		DIV_dist[clk_count] = 0;
-	}
-
-	p = 0;
-	do {
-		switch (op_list[p].function)		// (ALU = 0, MUL = 1, Logic / Logical = 2, Div = 3)
-		{
-		case 0:
-			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-			{
-				ALU_op[alu_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = alu_count;
-			}
-			alu_count++;											
-			break;
-		case 1:
-			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-			{
-				MUL_op[mul_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = mul_count;
-			}
-			mul_count++;								//count multiplier operations
-			break;
-
-		case 2:
-			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-			{
-				Logic_op[logic_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = logic_count;
-			}
-			logic_count++;
-			break;
-
-		case 3:
-			for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-			{
-				DIV_op[div_count][clk_count] = 1.0 / op_list[p].width;
-				op_list[p].op_loc = div_count;
-			}
-			div_count++;
-			break;
-		} //switch
-		++p;
-	} while (op_list[p].function < 99);
-
-	//sum the probabilities for each clock period
-	//MUL
-	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-	{
-		MUL_dist[clk_count] = MUL_op[0][clk_count] + MUL_op[1][clk_count] + MUL_op[2][clk_count] + MUL_op[3][clk_count];
-	}
-	//ALU
-	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-	{
-		ALU_dist[clk_count] = ALU_op[0][clk_count] + ALU_op[1][clk_count] + ALU_op[2][clk_count] + ALU_op[3][clk_count];
-	}
-	//Logic
-	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-	{
-		Logic_dist[clk_count] = Logic_op[0][clk_count] + Logic_op[1][clk_count] + Logic_op[2][clk_count] + Logic_op[3][clk_count];
-	}
-	//DIV
-	for (clk_count = 0; clk_count < l_cstrt; clk_count++)
-	{
-		DIV_dist[clk_count] = DIV_op[0][clk_count] + DIV_op[1][clk_count] + DIV_op[2][clk_count] + DIV_op[3][clk_count];
-	}
-}*/
-
-
 //given the node number and the clock period 
 //this function calculates the self-force
 double calcSelfForce(int node, int t_period)
@@ -1137,7 +1045,7 @@ void forceDSched(void)
 	double forces[20][10];					//array of forces, number of operations x latency constraint
 
 	//first step is to schedule implicitly scheduled operations; operations with a width of 1
-	for (p = 0; p < op_num; ++p)
+	for (p = 0; p < op_num; p++)
 	{
 		if (op_list[p].width == 1)
 		{
@@ -1146,23 +1054,32 @@ void forceDSched(void)
 		}
 	}
 
+	//initialize all forces to bogus high value
+	for (p = 0; p < op_num; p++)				//every node
+	{
+		for (k = 0; k < l_cstrt; k++)			//every clock period
+		{
+			forces[p][k] = 999.9;				//p is node, k is time period
+		}
+	}
+
 	while (sched_count < op_num)					//until all operations are scheduled
 	{
 		//initialize all forces to bogus high value
-		for (p = 0; p < op_num; ++p)				//every node
+		for (p = 0; p < op_num; p++)				//every node
 		{
-			for (k = 0; k < l_cstrt; ++k)			//every clock period
+			for (k = 0; k < l_cstrt; k++)			//every clock period
 			{
 				forces[p][k] = 999.9;				//p is node, k is time period
 			}
 		}
 
 		//find self force for each operation within its time frame
-		for (p = 0; p < op_num; ++p)		//every node
+		for (p = 0; p < op_num; p++)		//every node
 		{
 			if (!op_list[p].FDSch)			//not scheduled yet
 			{
-				for (k = op_list[p].ASAP_clock; k < op_list[p].ALAP_clock + 1; ++k)
+				for (k = op_list[p].ASAP_clock - 1; k < op_list[p].ALAP_clock; k++)
 				{
 					//forces[p][k] = calcSelfForce(p, k);				//p is node, k is time period
 					forces[p][k] = calcTForce(p, k);				//p is node, k is time period
@@ -1172,9 +1089,9 @@ void forceDSched(void)
 
 		low_force = 99.9;					//start with bogus high value
 		//find the operation with the least force
-		for (p = 0; p < op_num; ++p)		//every node
+		for (p = 0; p < op_num; p++)		//every node
 		{
-			for (k = 0; k < l_cstrt; ++k)	//every clock period
+			for (k = 0; k < l_cstrt; k++)	//every clock period
 			{
 				if (!op_list[p].FDSch)		//not scheduled yet
 				{
@@ -1188,9 +1105,10 @@ void forceDSched(void)
 			}
 		}
 
-		op_list[p].FDSched = op_list[p].low_f_period;			//schedule this operation for its lowest force period
-		op_list[p].ASAP_clock = op_list[p].FDSched;				//update the time frame
-		op_list[p].ALAP_clock = op_list[p].FDSched;
+		op_list[low_node].FDSched = low_period;									//schedule this node
+		op_list[low_node].low_f_period = low_period;							//record the low force period
+		op_list[low_node].ASAP_clock = op_list[low_node].FDSched;				//update the time frame
+		op_list[low_node].ALAP_clock = op_list[low_node].FDSched;
 		sched_count++;											//count operations scheduled
 	} //while (sched_count < op_num)						//until all operations are scheduled
 }
