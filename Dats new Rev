@@ -11,7 +11,7 @@ using namespace std;
 //global variables
 string ins_list = string();		//comma delimited list of inputs to the circuit
 int circuit_clocks = 0;			//number of clock periods required to schedule this circuit
-int l_cstrt = 7;				//latency constraint as specified by input
+int l_cstrt = 0;				//latency constraint as specified by input
 int op_num = 0;					//number of operations or node required by the input
 int sum_count_DPC = 0;		//count the datapath components, which is sum of count_DPC[]
 
@@ -686,6 +686,14 @@ void alap_sequence(int &latency)
 			}
 		}		
 	}
+
+	k = 0;
+	while (op_list[k].dp_outs_str != "")
+	{
+		op_list[k].width = (op_list[k].ALAP_clock - op_list[k].ASAP_clock) + 1;
+		k++;
+	}
+
 	return;
 }
 
@@ -841,6 +849,7 @@ void op_prob(void)
 		DIV_dist[clk_count] = 0;
 	}
 
+	p = 0;
 	do {
 		switch (op_list[p].function)		// (ALU = 0, MUL = 1, Logic / Logical = 2, Div = 3)
 		{
@@ -1138,6 +1147,7 @@ int main(int argc, char *argv[])
 
 	cout << "Enter latency value (in cycles): "; //latency value input
 	cin >> latency;
+	l_cstrt = latency;
 	if (latency == 0)
 	{
 		cout << "Missing latency Value ";
@@ -1293,11 +1303,14 @@ int main(int argc, char *argv[])
 		system("pause");
 		return 1;
 	}
+	op_num = sum_count_DPC;
 	myfile1.close();
 
 	parse_cir_inputs();
 	asap_sequence(latency, error);
 	alap_sequence(latency);
+	op_prob();
+	forceDSched();
 
 	if (error == 4)
 	{
@@ -1364,7 +1377,11 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		myfile2 << "\n";
+		myfile2 << "\nalways@(posedge clock) \nbegin \n\tstate <= #1 IDLE; \n";
+
+		myfile2 << "end else \n\tcase(state) \n";
+		myfile2 << "\t\tIDLE : if (start == 1'b1) begin\n\t\t\tstate <= #1 S??;";
+		myfile2 << "\n\t\t\tdone <= 0; \n\t\tend else begin \n\t\t\tstate <= #1 IDLE; \n\t\tend\n";
 		myfile2 << "ASAP \n";
 
 		m = 1; oline = ""; newline = "";
@@ -1410,6 +1427,7 @@ int main(int argc, char *argv[])
 			m++;
 		}
 
+		myfile2 << "\n\tdefault : state <= #1 IDLE; \n\tend case \nend ";
 		myfile2 << "\nendmodule \n";
 	}
 	else
