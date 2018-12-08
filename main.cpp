@@ -42,7 +42,7 @@ struct dp_comp {                //Data Path Component (DPC) structure with attri
     //populate by self force routine
     float s_force;
     int op_loc;                    //index of this node's data in the the specific resource probability table
-    int FDSch;                    //period in which node is schedule by FDS
+    //int FDSch;                    //period in which node is schedule by FDS
 
     //delete later
     int i_clock;                //clock latency number
@@ -68,10 +68,10 @@ struct cir_desc {            //circuit description
 };
 struct cir_desc cir_list;
 
-double MUL_op[4][20] = {0.0};     // Initialize 2D array to all 0
-double ALU_op[4][20] = {0.0};     // Initialize 2D array to all 0
-double Logic_op[4][20] = {0.0};   // Initialize 2D array to all 0
-double DIV_op[4][20] = {0.0};     // Initialize 2D array to all 0
+double MUL_op[][20] = {0.0};     // Initialize 2D array to all 0
+double ALU_op[][20] = {0.0};     // Initialize 2D array to all 0
+double Logic_op[][20] = {0.0};   // Initialize 2D array to all 0
+double DIV_op[][20] = {0.0};     // Initialize 2D array to all 0
 
 double MUL_dist[20] = {0.0};    //Initialize  array to all 0
 double ALU_dist[20] = {0.0};    //Initialize  array to all 0
