@@ -44,7 +44,7 @@ echo -e '[0;31m#########################Starting Tests ########################
 #sleep 1s
 ././../../cmake-build-debug/src/hlysn ././../standard_tests/hls_test2.c $1 hls_test2.v
 #sleep 1s
-././../../cmake-build-debug/src/hlysn ././../standard_tests/hls_test5.c $1 hls_test5.
+././../../cmake-build-debug/src/hlysn ././../standard_tests/hls_test5.c $1 hls_test5.v
 #sleep 1s
 ././../../cmake-build-debug/src/hlysn ././../standard_tests/hls_test3.c $1 hls_test3.v
 #sleep 1s
