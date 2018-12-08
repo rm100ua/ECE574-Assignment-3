@@ -30,11 +30,11 @@ echo -e '[0;31m#########################Starting Tests ########################
 #sleep 1s
 ././../../cmake-build-debug/src/hlysn ././../for_tests/test_for3.c $1 test_for3.v
 #sleep 1s
-././../../cmake-build-debug/src/hlysn ././../error_tests/error3.c $1 test error3.v
+#././../../cmake-build-debug/src/hlysn ././../error_tests/error3.c $1 test error3.v
 #sleep 1s
-././../../cmake-build-debug/src/hlysn ././../error_tests/error2.c $1 test error2.v
+#././../../cmake-build-debug/src/hlysn ././../error_tests/error2.c $1 test error2.v
 #sleep 1s
-././../../cmake-build-debug/src/hlysn ././../error_tests/error1.c $1 test error1.v
+#././../../cmake-build-debug/src/hlysn ././../error_tests/error1.c $1 test error1.v
 #sleep 1s
 ././../../cmake-build-debug/src/hlysn ././../standard_tests/hls_test7.c $1 hls_test7.v
 #sleep 1s
