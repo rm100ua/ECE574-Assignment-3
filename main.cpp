@@ -421,7 +421,8 @@ void parse_cir_inputs(void) {
     } while (temp_str[end_pos] && p < 40);
 }
 
-void asap_sequence(int &latency, int &error) {
+void asap_sequence(int &latency, int &error)
+{
     int b = 0, d = 0, h = 0, k = 0;
     int yes = 0, xyes = 0, yyes = 0, wyes = 0;
     int clock = 0, more = 0, cycle = 0, func = 1, temp = 1;
@@ -430,31 +431,35 @@ void asap_sequence(int &latency, int &error) {
     string dpc_var3 = "";
     string str = "";
 
-    while (clock <= latency) {
-        while (op_list[d].dp_outs_str != "")        //compare data path components with the inputs to the circuit
+    while (clock <= latency)
+    {
+        while (op_list[d].dp_outs_str != "")		//compare data path components with the inputs to the circuit
         {
-            if (op_list[d].ASAP_clock == 0) {
-                for (b = 0; b < cir_list.inp_count; b++) {
+            if (op_list[d].ASAP_clock == 0)
+            {
+                for (b = 0; b < cir_list.inp_count; b++)
+                {
                     str = cir_list.ins[b];
                     dpc_var1 = op_list[d].dp_ins[0];
-                    if (dpc_var1 == str) {
+                    if (dpc_var1 == str)
+                    {
                         xyes++;
                         break;
                     }
                 }
                 h = 0;
-                while ((op_list[h].dp_outs_str != "") && (xyes == 0) && (clock != 0)) {
-                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) &&
-                        (op_list[h].ASAP_clock >= 0)) {
-                        if (dpc_var1 == op_list[h].dp_outs[0]) {
+                while ((op_list[h].dp_outs_str != "") && (xyes == 0) && (clock != 0))
+                {
+                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
+                    {
+                        if (dpc_var1 == op_list[h].dp_outs[0])
+                        {
                             xyes++;
-                            if ((op_list[h].function == 1) &&
-                                ((clock - op_list[h].ASAP_clock) < 2))            //multiplier operation
+                            if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
                             {
                                 more = 1;
                             }
-                            if ((op_list[h].function == 3) &&
-                                ((clock - op_list[h].ASAP_clock) < 3))            //division or modulus operation
+                            if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
                             {
                                 more = 2;
                             }
@@ -463,30 +468,34 @@ void asap_sequence(int &latency, int &error) {
                     }
                     h++;
                 }
-                for (b = 0; b < cir_list.inp_count; b++) {
-                    if (op_list[d].dp_ins[1] != "") {
+                for (b = 0; b < cir_list.inp_count; b++)
+                {
+                    if (op_list[d].dp_ins[1] != "")
+                    {
                         str = cir_list.ins[b];
                         dpc_var2 = op_list[d].dp_ins[1];
-                        if (dpc_var2 == str) {
+                        if (dpc_var2 == str)
+                        {
                             yyes++;
                             break;
                         }
-                    } else
+                    }
+                    else
                         break;
                 }
                 h = 0;
-                while ((op_list[h].dp_outs_str != "") && (yyes == 0) && (clock != 0)) {
-                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) &&
-                        (op_list[h].ASAP_clock >= 0)) {
-                        if (dpc_var2 == op_list[h].dp_outs[k]) {
+                while ((op_list[h].dp_outs_str != "") && (yyes == 0) && (clock != 0))
+                {
+                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
+                    {
+                        if (dpc_var2 == op_list[h].dp_outs[k])
+                        {
                             yyes++;
-                            if ((op_list[h].function == 1) &&
-                                ((clock - op_list[h].ASAP_clock) < 2))            //multiplier operation
+                            if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
                             {
                                 more = 1;
                             }
-                            if ((op_list[h].function == 3) &&
-                                ((clock - op_list[h].ASAP_clock) < 3))            //division or modulus operation
+                            if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
                             {
                                 more = 2;
                             }
@@ -495,30 +504,34 @@ void asap_sequence(int &latency, int &error) {
                     }
                     h++;
                 }
-                for (b = 0; b < cir_list.inp_count; b++) {
-                    if (op_list[d].dp_ins[2] != "") {
+                for (b = 0; b < cir_list.inp_count; b++)
+                {
+                    if (op_list[d].dp_ins[2] != "")
+                    {
                         str = cir_list.ins[b];
                         dpc_var3 = op_list[d].dp_ins[2];
-                        if (dpc_var3 == str) {
+                        if (dpc_var3 == str)
+                        {
                             wyes++;
                             break;
                         }
-                    } else
+                    }
+                    else
                         break;
                 }
                 h = 0;
-                while ((op_list[h].dp_outs_str != "") && (wyes == 0) && (clock != 0)) {
-                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) &&
-                        (op_list[h].ASAP_clock >= 0)) {
-                        if (dpc_var3 == op_list[h].dp_outs[0]) {
+                while ((op_list[h].dp_outs_str != "") && (wyes == 0) && (clock != 0))
+                {
+                    if ((h != d) && (op_list[h].ASAP_clock <= clock) && (op_list[h].ASAP_clock != 0) && (op_list[h].ASAP_clock >= 0))
+                    {
+                        if (dpc_var3 == op_list[h].dp_outs[0])
+                        {
                             wyes++;
-                            if ((op_list[h].function == 1) &&
-                                ((clock - op_list[h].ASAP_clock) < 2))            //multiplier operation
+                            if ((op_list[h].function == 1) && ((clock - op_list[h].ASAP_clock) < 2))			//multiplier operation
                             {
                                 more = 1;
                             }
-                            if ((op_list[h].function == 3) &&
-                                ((clock - op_list[h].ASAP_clock) < 3))            //division or modulus operation
+                            if ((op_list[h].function == 3) && ((clock - op_list[h].ASAP_clock) < 3))			//division or modulus operation
                             {
                                 more = 2;
                             }
@@ -536,20 +549,15 @@ void asap_sequence(int &latency, int &error) {
                     op_list[d].ASAP_clock = op_list[d].ASAP_clock + more + clock + 1;
             }
             d++;
-            yes = 0;
-            xyes = 0;
-            yyes = 0;
-            wyes = 0;
-            more = 0;
-            dpc_var1 = "";
-            dpc_var2 = "";
-            dpc_var3 = "";
+            yes = 0; xyes = 0; yyes = 0; wyes = 0; more = 0;
+            dpc_var1 = ""; dpc_var2 = ""; dpc_var3 = "";
         }
         d = 0;
         clock++;
     }
 
-    while (op_list[k].ASAP_clock != 0) {
+    while (op_list[k].ASAP_clock != 0)
+    {
         if (op_list[k].ASAP_clock > cycle)
             cycle = op_list[k].ASAP_clock;
         else
@@ -557,14 +565,16 @@ void asap_sequence(int &latency, int &error) {
         k++;
     }
     k = 0;
-    while (op_list[k].ASAP_clock != 0) {
-        if (op_list[k].ASAP_clock == cycle) {
+    while (op_list[k].ASAP_clock != 0)
+    {
+        if (op_list[k].ASAP_clock == cycle)
+        {
             if (op_list[k].function == 1)
-                temp = 2;
-            if (op_list[k].function == 3)
-                temp = 3;
-            if ((op_list[k].function == 0) || (op_list[k].function == 2))
                 temp = 1;
+            if (op_list[k].function == 3)
+                temp = 2;
+            if ((op_list[k].function == 0) || (op_list[k].function == 2))
+                temp = 0;
         }
         if (temp > func)
             func = temp;
@@ -578,6 +588,8 @@ void asap_sequence(int &latency, int &error) {
         error = 0;
     return;
 }
+
+
 
 void alap_sequence(int &latency) {
     int b = 0, d = 0, h = 0, k = 0, s = 0;
@@ -901,8 +913,7 @@ void forceDSched(void) {
             }
         }
 
-        op_list[low_node].FDSched = low_period +
-                                    1;                            //schedule this node, FDSched, ASAP_clock, ALAP clock start at 1
+        op_list[low_node].FDSched = low_period + 1;                            //schedule this node, FDSched, ASAP_clock, ALAP clock start at 1
         op_list[low_node].low_f_period = low_period + 1;                    //record the low force period
         op_list[low_node].ASAP_clock = op_list[low_node].FDSched;            //update the time frame
         op_list[low_node].ALAP_clock = op_list[low_node].FDSched;
@@ -962,6 +973,7 @@ int main(int argc, char *argv[]) {
         filename1 = string(argv[1]);
         filename2 = string(argv[3]);
         latency = stoi(argv[2]);
+        l_cstrt = latency;
     }
     else
     {
