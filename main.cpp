@@ -68,9 +68,9 @@ struct cir_desc {            //circuit description
 };
 struct cir_desc cir_list;
 
-double MUL_op[][40] = {0.0};     // Initialize 2D array to all 0
-double ALU_op[][40] = {0.0};     // Initialize 2D array to all 0
-double Logic_op[][40] = {0.0};   // Initialize 2D array to all 0
+double MUL_op[40][40] = {0.0};     // Initialize 2D array to all 0
+double ALU_op[40][40] = {0.0};     // Initialize 2D array to all 0
+double Logic_op[40][40] = {0.0};   // Initialize 2D array to all 0
 double DIV_op[][40] = {0.0};     // Initialize 2D array to all 0
 
 double MUL_dist[40] = {0.0};    //Initialize  array to all 0
